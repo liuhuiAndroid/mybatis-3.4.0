@@ -15,6 +15,16 @@
  */
 package org.apache.ibatis.parsing;
 
+import org.apache.ibatis.builder.BuilderException;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.EntityResolver;
+import org.xml.sax.ErrorHandler;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
+
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.StringReader;
@@ -29,25 +39,20 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
 
-import org.apache.ibatis.builder.BuilderException;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.EntityResolver;
-import org.xml.sax.ErrorHandler;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
-
 /**
  * @author Clinton Begin
  */
 public class XPathParser {
 
+  // Document对象
   private Document document;
+  // 是否开启验证
   private boolean validation;
+  // 用于加载本地DTD文件，实现类：XMLMapperEntityResolver，核心是resolveEntity()方法
   private EntityResolver entityResolver;
+  // mybatis-config.xml中<properties>标签定义的键值对集合
   private Properties variables;
+  // XPath对象，是一种为查询XML文档而设计的语言，它可以与DOM解析方式配合使用，实现对XML文档的解析
   private XPath xpath;
 
   public XPathParser(String xml) {
@@ -134,12 +139,17 @@ public class XPathParser {
     this.variables = variables;
   }
 
+  /**
+   * eval*()方法用于解析各种类型的信息
+   */
   public String evalString(String expression) {
     return evalString(document, expression);
   }
 
   public String evalString(Object root, String expression) {
+    // 进行相应的类型转换
     String result = (String) evaluate(expression, root, XPathConstants.STRING);
+    // 调用PropertyParser.parse()方法处理节点中相应的默认值
     result = PropertyParser.parse(result, variables);
     return result;
   }
@@ -219,16 +229,23 @@ public class XPathParser {
 
   private Object evaluate(String expression, Object root, QName returnType) {
     try {
+      // 通过调用Xpath.evaluate()方法查找指定路径的节点或属性
       return xpath.evaluate(expression, root, returnType);
     } catch (Exception e) {
       throw new BuilderException("Error evaluating XPath.  Cause: " + e, e);
     }
   }
 
+  /**
+   * 创建Document对象并触发了加载XML文档的过程
+   */
   private Document createDocument(InputSource inputSource) {
     // important: this must only be called AFTER common constructor
+    // 调用createDocument()方法之前一定要调用commonConstructor()方法完成初始化
     try {
+      // 创建DocumentBuilderFactory对象
       DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+      // 对DocumentBuilderFactory对象进行一系列配置
       factory.setValidating(validation);
 
       factory.setNamespaceAware(false);
@@ -237,23 +254,29 @@ public class XPathParser {
       factory.setCoalescing(false);
       factory.setExpandEntityReferences(true);
 
+      // 创建DocumentBuilder对象进行配置
       DocumentBuilder builder = factory.newDocumentBuilder();
+      // 设置EntityResolver接口对象
       builder.setEntityResolver(entityResolver);
       builder.setErrorHandler(new ErrorHandler() {
         @Override
         public void error(SAXParseException exception) throws SAXException {
           throw exception;
+          // 空实现
         }
 
         @Override
         public void fatalError(SAXParseException exception) throws SAXException {
           throw exception;
+          // 空实现
         }
 
         @Override
         public void warning(SAXParseException exception) throws SAXException {
+          // 空实现
         }
       });
+      // 加载XML文件
       return builder.parse(inputSource);
     } catch (Exception e) {
       throw new BuilderException("Error creating document instance.  Cause: " + e, e);

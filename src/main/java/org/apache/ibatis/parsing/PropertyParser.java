@@ -28,7 +28,9 @@ public class PropertyParser {
 
   public static String parse(String string, Properties variables) {
     VariableTokenHandler handler = new VariableTokenHandler(variables);
+    // 创建GenericTokenParser对象，并指定其处理的占位符格式为"${}"
     GenericTokenParser parser = new GenericTokenParser("${", "}", handler);
+    // 将默认值的处理委托给GenericTokenParser.parse()方法
     return parser.parse(string);
   }
 
