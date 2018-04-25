@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace：命名空间-->
+<mapper namespace="test">
+    <!-- id:statement的id 或者叫做sql的id-->
+    <!-- parameterType:指定输入参数类型 -->
+    <!-- resultType:指定输出结果类型，应该填写pojo的全路径 -->
+    <!-- #{}：输入参数的占位符，相当于jdbc的？ -->
+    <select id="findUserById" parameterType="int"
+            resultType="com.lh.demo.pojo.User">
+        SELECT * FROM `m_user` WHERE id  = #{id}
+    </select>
+    <!-- //根据用户名称模糊查询用户列表
+    #{}表示一个占位符号    select * from user where id = ？     ? ==  '五'
+    ${}表示拼接sql串    select * from user where username like '%五%'  -->
+    <select id="findUserByUsername" parameterType="String" resultType="com.lh.demo.pojo.User">
+        select * from m_user where username like "%"#{haha}"%"
+    </select>
+    <!-- 添加用户 -->
+    <insert id="insertUser" parameterType="com.lh.demo.pojo.User">
+        <!-- selectKey 标签实现主键返回 -->
+        <!-- keyColumn:主键对应的表中的哪一列 -->
+        <!-- keyProperty：主键对应的pojo中的哪一个属性 -->
+        <!-- order：设置在执行insert语句前执行查询id的sql，还是在执行insert语句之后执行查询id的sql -->
+        <!-- resultType：设置返回的id的类型 -->
+        <selectKey keyColumn="id" keyProperty="id" resultType="Integer" order="AFTER">
+            <!-- mysql的函数，返回auto_increment自增列新记录id值 -->
+            select LAST_INSERT_ID()
+        </selectKey>
+        insert into m_user (username,birthday,address,sex)
+        values (#{username},#{birthday},#{address},#{sex})
+    </insert>
+    <!-- 更新 -->
+    <update id="updateUserById" parameterType="com.lh.demo.pojo.User">
+        update m_user
+        set username = #{username},sex = #{sex},birthday = #{birthday},address = #{address}
+        where id = #{id}
+    </update>
+    <!-- 删除 -->
+    <delete id="deleteUserById" parameterType="Integer">
+        delete from m_user
+        where id = #{vvvvv}
+    </delete>
+</mapper>
