@@ -15,6 +15,9 @@
  */
 package org.apache.ibatis.datasource.jndi;
 
+import org.apache.ibatis.datasource.DataSourceException;
+import org.apache.ibatis.datasource.DataSourceFactory;
+
 import java.util.Map.Entry;
 import java.util.Properties;
 
@@ -23,11 +26,9 @@ import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.sql.DataSource;
 
-import org.apache.ibatis.datasource.DataSourceException;
-import org.apache.ibatis.datasource.DataSourceFactory;
-
 /**
  * @author Clinton Begin
+ * 依赖JNDI服务从容器中获取用户配置的DataSource
  */
 public class JndiDataSourceFactory implements DataSourceFactory {
 

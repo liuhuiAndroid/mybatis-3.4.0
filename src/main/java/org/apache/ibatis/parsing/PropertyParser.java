@@ -26,6 +26,9 @@ public class PropertyParser {
     // Prevent Instantiation
   }
 
+  /**
+   * 使用VariableTokenHandler与GenericTokenParser配合完成占位符解析
+   */
   public static String parse(String string, Properties variables) {
     VariableTokenHandler handler = new VariableTokenHandler(variables);
     // 创建GenericTokenParser对象，并指定其处理的占位符格式为"${}"

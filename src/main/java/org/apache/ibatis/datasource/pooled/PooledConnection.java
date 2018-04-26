@@ -15,16 +15,17 @@
  */
 package org.apache.ibatis.datasource.pooled;
 
+import org.apache.ibatis.reflection.ExceptionUtil;
+
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-import org.apache.ibatis.reflection.ExceptionUtil;
-
 /**
  * @author Clinton Begin
+ * 封装了真正的数据库连接对象以及其代理对象
  */
 class PooledConnection implements InvocationHandler {
 
@@ -32,13 +33,22 @@ class PooledConnection implements InvocationHandler {
   private static final Class<?>[] IFACES = new Class<?>[] { Connection.class };
 
   private int hashCode = 0;
+  // 记录当前PooledConnection对象所在的PooledDataSource对象。
+  // 该PooledConnection是从该PooledDataSource种获取的，当调用close()方法时会将PooledConnection放回该PooledDataSource中
   private PooledDataSource dataSource;
+  // 真正的数据库连接
   private Connection realConnection;
+  // 数据库连接的代理对象
   private Connection proxyConnection;
+  // 从连接池中取出该连接的时间戳
   private long checkoutTimestamp;
+  // 该连接创建的时间戳
   private long createdTimestamp;
+  // 最后一次被使用的时间戳
   private long lastUsedTimestamp;
+  // 由数据库URL、用户名和密码计算出来的hash值，可用于标识该连接所在的连接池
   private int connectionTypeCode;
+  // 检测当前PooledConnection是否有效，主要是为了防止程序通过close()方法将连接归还给连接池之后，依然通过该连接操作数据库
   private boolean valid;
 
   /*
@@ -66,7 +76,7 @@ class PooledConnection implements InvocationHandler {
 
   /*
    * Method to see if the connection is usable
-   *
+   * 检测PoolConnection的有效性
    * @return True if the connection is usable
    */
   public boolean isValid() {
@@ -86,6 +96,7 @@ class PooledConnection implements InvocationHandler {
    * Getter for the proxy for the connection
    *
    * @return The proxy
+   * 获取数据库连接的代理对象
    */
   public Connection getProxyConnection() {
     return proxyConnection;
@@ -228,10 +239,12 @@ class PooledConnection implements InvocationHandler {
    * @param method - the method to be executed
    * @param args   - the parameters to be passed to the method
    * @see java.lang.reflect.InvocationHandler#invoke(Object, java.lang.reflect.Method, Object[])
+   * proxyConnection这个连接代理对象的真正代理逻辑
    */
   @Override
   public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
     String methodName = method.getName();
+    // 如果调用close()方法，则将其重新放入连接池，而不是真正关闭数据库连接
     if (CLOSE.hashCode() == methodName.hashCode() && CLOSE.equals(methodName)) {
       dataSource.pushConnection(this);
       return null;
@@ -240,8 +253,10 @@ class PooledConnection implements InvocationHandler {
         if (!Object.class.equals(method.getDeclaringClass())) {
           // issue #579 toString() should never fail
           // throw an SQLException instead of a Runtime
+          // 通过valid字段检测连接是否有效
           checkConnection();
         }
+        // 调用真正数据库连接对象的对应方法
         return method.invoke(realConnection, args);
       } catch (Throwable t) {
         throw ExceptionUtil.unwrapThrowable(t);

@@ -15,17 +15,18 @@
  */
 package org.apache.ibatis.datasource.unpooled;
 
-import java.util.Properties;
-
-import javax.sql.DataSource;
-
 import org.apache.ibatis.datasource.DataSourceException;
 import org.apache.ibatis.datasource.DataSourceFactory;
 import org.apache.ibatis.reflection.MetaObject;
 import org.apache.ibatis.reflection.SystemMetaObject;
 
+import java.util.Properties;
+
+import javax.sql.DataSource;
+
 /**
  * @author Clinton Begin
+ * 工厂模式——具体工厂类
  */
 public class UnpooledDataSourceFactory implements DataSourceFactory {
 
@@ -35,27 +36,36 @@ public class UnpooledDataSourceFactory implements DataSourceFactory {
   protected DataSource dataSource;
 
   public UnpooledDataSourceFactory() {
+    // 直接创建UnpooledDataSource对象并初始化dataSource字段
     this.dataSource = new UnpooledDataSource();
   }
 
+  /**
+   * 完成对DataSource对象的配置
+   */
   @Override
   public void setProperties(Properties properties) {
     Properties driverProperties = new Properties();
+    // 创建DataSource相应的MetaObject
     MetaObject metaDataSource = SystemMetaObject.forObject(dataSource);
+    // 遍历properties集合，该集合中配置了数据源需要的信息
     for (Object key : properties.keySet()) {
       String propertyName = (String) key;
       if (propertyName.startsWith(DRIVER_PROPERTY_PREFIX)) {
         String value = properties.getProperty(propertyName);
+        // 以"driver."开头的配置项是对DataSource的配置，记录到driverProperties中保存
         driverProperties.setProperty(propertyName.substring(DRIVER_PROPERTY_PREFIX_LENGTH), value);
-      } else if (metaDataSource.hasSetter(propertyName)) {
+      } else if (metaDataSource.hasSetter(propertyName)) { // 是否有该属性的setter方法
         String value = (String) properties.get(propertyName);
+        // 根据属性类型进行类型转换，主要是Integer、Long、Boolean三种类型的转换
         Object convertedValue = convertValue(metaDataSource, propertyName, value);
+        // 设置DataSource的相关属性值
         metaDataSource.setValue(propertyName, convertedValue);
       } else {
         throw new DataSourceException("Unknown DataSource property: " + propertyName);
       }
     }
-    if (driverProperties.size() > 0) {
+    if (driverProperties.size() > 0) { // 设置DataSource.driverProperties属性值
       metaDataSource.setValue("driverProperties", driverProperties);
     }
   }

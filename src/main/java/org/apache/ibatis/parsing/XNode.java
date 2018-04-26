@@ -28,6 +28,8 @@ import java.util.Properties;
 
 /**
  * @author Clinton Begin
+ * 对org.w3c.dom.Node对象做了封装和解析
+ * 提供多种get*()方法获取所需的节点信息，这些信息主要来自attributes字段、body字段、node字段
  */
 public class XNode {
 
@@ -49,6 +51,7 @@ public class XNode {
     this.node = node;
     this.name = node.getNodeName();
     this.variables = variables;
+    //调用parseAttributes()方法和parseBody()方法解析org.w3c.dom.Node对象中的信息
     this.attributes = parseAttributes(node);
     this.body = parseBody(node);
   }

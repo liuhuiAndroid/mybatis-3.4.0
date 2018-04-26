@@ -17,6 +17,8 @@ package org.apache.ibatis.parsing;
 
 /**
  * @author Clinton Begin
+ * 用于默认值解析和动态SQL解析
+ * GenericTokenParser只是查找指定的占位符，具体的解析行为会根据其持有的TokenHandler实现的不同而有所不同，类似策略模式
  */
 public class GenericTokenParser {
 

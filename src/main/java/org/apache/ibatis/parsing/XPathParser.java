@@ -237,7 +237,7 @@ public class XPathParser {
   }
 
   /**
-   * 创建Document对象并触发了加载XML文档的过程
+   * 封装了创建Document对象过程并触发了加载XML文档的过程
    */
   private Document createDocument(InputSource inputSource) {
     // important: this must only be called AFTER common constructor
