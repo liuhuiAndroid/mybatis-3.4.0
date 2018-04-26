@@ -35,6 +35,7 @@ public class PropertyParser {
   }
 
   private static class VariableTokenHandler implements TokenHandler {
+    // <properties>节点下定义的键值对，用于替换占位符
     private Properties variables;
 
     public VariableTokenHandler(Properties variables) {
@@ -43,9 +44,11 @@ public class PropertyParser {
 
     @Override
     public String handleToken(String content) {
+      // 直接查找variables集合
       if (variables != null && variables.containsKey(content)) {
         return variables.getProperty(content);
       }
+      // variables集合为空
       return "${" + content + "}";
     }
   }
