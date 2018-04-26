@@ -15,28 +15,30 @@
  */
 package org.apache.ibatis.transaction;
 
+import org.apache.ibatis.session.TransactionIsolationLevel;
+
 import java.sql.Connection;
 import java.util.Properties;
 
 import javax.sql.DataSource;
 
-import org.apache.ibatis.session.TransactionIsolationLevel;
-
 /**
  * Creates {@link Transaction} instances.
- *
+ * 工厂模式——工厂接口
  * @author Clinton Begin
  */
 public interface TransactionFactory {
 
   /**
    * Sets transaction factory custom properties.
+   * 配置TransactionFactory对象，一般紧跟在创建完成之后，完成对TransactionFactory的自定义配置
    * @param props
    */
   void setProperties(Properties props);
 
   /**
    * Creates a {@link Transaction} out of an existing connection.
+   * 在指定的连接上创建Transaction对象
    * @param conn Existing database connection
    * @return Transaction
    * @since 3.1.0
@@ -45,6 +47,7 @@ public interface TransactionFactory {
   
   /**
    * Creates a {@link Transaction} out of a datasource.
+   * 从指定数据源中获取数据库连接，并在此连接之上创建Transaction对象
    * @param dataSource DataSource to take the connection from
    * @param level Desired isolation level
    * @param autoCommit Desired autocommit

@@ -15,18 +15,18 @@
  */
 package org.apache.ibatis.transaction.managed;
 
+import org.apache.ibatis.session.TransactionIsolationLevel;
+import org.apache.ibatis.transaction.Transaction;
+import org.apache.ibatis.transaction.TransactionFactory;
+
 import java.sql.Connection;
 import java.util.Properties;
 
 import javax.sql.DataSource;
 
-import org.apache.ibatis.session.TransactionIsolationLevel;
-import org.apache.ibatis.transaction.Transaction;
-import org.apache.ibatis.transaction.TransactionFactory;
-
 /**
  * Creates {@link ManagedTransaction} instances.
- *
+ * 工厂模式——具体工厂类
  * @author Clinton Begin
  *
  * @see ManagedTransaction

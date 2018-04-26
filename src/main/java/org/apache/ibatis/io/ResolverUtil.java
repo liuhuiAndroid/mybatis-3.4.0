@@ -15,14 +15,14 @@
  */
 package org.apache.ibatis.io;
 
+import org.apache.ibatis.logging.Log;
+import org.apache.ibatis.logging.LogFactory;
+
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import org.apache.ibatis.logging.Log;
-import org.apache.ibatis.logging.LogFactory;
 
 /**
  * <p>ResolverUtil is used to locate classes that are available in the/a class path and meet
@@ -53,6 +53,7 @@ import org.apache.ibatis.logging.LogFactory;
  * resolver.find(new CustomTest(), pkg2);
  * Collection&lt;ActionBean&gt; beans = resolver.getClasses();
  * </pre>
+ * 可以根据指定的条件查找指定包下的类
  *
  * @author Tim Fennell
  */
@@ -65,11 +66,14 @@ public class ResolverUtil<T> {
   /**
    * A simple interface that specifies how to test classes to determine if they
    * are to be included in the results produced by the ResolverUtil.
+   * 条件
    */
   public static interface Test {
     /**
      * Will be called repeatedly with candidate classes. Must return True if a class
      * is to be included in the results, false otherwise.
+     * 用于检测指定类是否符合条件
+     * 参数type是待检测的类，如果该类符合检测的条件，则matches()方法返回true，否则返回false
      */
     boolean matches(Class<?> type);
   }
@@ -77,6 +81,7 @@ public class ResolverUtil<T> {
   /**
    * A Test that checks to see if each class is assignable to the provided class. Note
    * that this test will match the parent type itself if it is presented for matching.
+   * 用于检测指定类是否继承了parent指定的类
    */
   public static class IsA implements Test {
     private Class<?> parent;
@@ -101,6 +106,7 @@ public class ResolverUtil<T> {
   /**
    * A Test that checks to see if each class is annotated with a specific annotation. If it
    * is, then the test returns true, otherwise false.
+   * 检测指定类是否添加了annotation注解
    */
   public static class AnnotatedWith implements Test {
     private Class<? extends Annotation> annotation;
@@ -128,6 +134,8 @@ public class ResolverUtil<T> {
   /**
    * The ClassLoader to use when looking for classes. If null then the ClassLoader returned
    * by Thread.currentThread().getContextClassLoader() will be used.
+   * 记录了当前使用的类加载器
+   * 默认情况下使用的是当前线程上下文绑定的ClassLoader
    */
   private ClassLoader classloader;
 
@@ -144,7 +152,7 @@ public class ResolverUtil<T> {
   /**
    * Returns the classloader that will be used for scanning for classes. If no explicit
    * ClassLoader has been set by the calling, the context class loader will be used.
-   *
+   * 修改使用类加载器
    * @return the ClassLoader that will be used to scan for classes
    */
   public ClassLoader getClassLoader() {
