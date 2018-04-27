@@ -15,15 +15,15 @@
  */
 package org.apache.ibatis.logging.jdbc;
 
+import org.apache.ibatis.logging.Log;
+import org.apache.ibatis.reflection.ExceptionUtil;
+
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
-
-import org.apache.ibatis.logging.Log;
-import org.apache.ibatis.reflection.ExceptionUtil;
 
 /**
  * Connection proxy to add logging
@@ -41,6 +41,9 @@ public final class ConnectionLogger extends BaseJdbcLogger implements Invocation
     this.connection = conn;
   }
 
+  /**
+   * 代理对象的和新方法，为prepareStatement()、prepareCall()、createStatement()等方法提供了代理
+   */
   @Override
   public Object invoke(Object proxy, Method method, Object[] params)
       throws Throwable {
@@ -76,11 +79,13 @@ public final class ConnectionLogger extends BaseJdbcLogger implements Invocation
 
   /*
    * Creates a logging version of a connection
+   * 为封装的Connection对象创建相应的代理对象
    *
    * @param conn - the original connection
    * @return - the connection with logging
    */
   public static Connection newInstance(Connection conn, Log statementLog, int queryStack) {
+    // 使用JDK动态代理的方式创建代理对象
     InvocationHandler handler = new ConnectionLogger(conn, statementLog, queryStack);
     ClassLoader cl = Connection.class.getClassLoader();
     return (Connection) Proxy.newProxyInstance(cl, new Class[]{Connection.class}, handler);

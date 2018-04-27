@@ -152,7 +152,7 @@ public class ResolverUtil<T> {
   /**
    * Returns the classloader that will be used for scanning for classes. If no explicit
    * ClassLoader has been set by the calling, the context class loader will be used.
-   * 修改使用类加载器
+   * 默认情况下使用 Thread.currentThread().getContextClassLoader() 这个类加载器加载符合条件的类
    * @return the ClassLoader that will be used to scan for classes
    */
   public ClassLoader getClassLoader() {
@@ -162,7 +162,7 @@ public class ResolverUtil<T> {
   /**
    * Sets an explicit ClassLoader that should be used when scanning for classes. If none
    * is set then the context classloader will be used.
-   *
+   * 修改使用类加载器
    * @param classloader a ClassLoader to use when scanning for classes
    */
   public void setClassLoader(ClassLoader classloader) {
@@ -183,6 +183,7 @@ public class ResolverUtil<T> {
       return this;
     }
 
+    // 创建IsA对象作为检测条件
     Test test = new IsA(parent);
     for (String pkg : packageNames) {
       find(test, pkg);
@@ -203,6 +204,7 @@ public class ResolverUtil<T> {
       return this;
     }
 
+    // 创建AnnotatedWith对象作为检测条件
     Test test = new AnnotatedWith(annotation);
     for (String pkg : packageNames) {
       find(test, pkg);
@@ -222,13 +224,14 @@ public class ResolverUtil<T> {
    *        classes, e.g. {@code net.sourceforge.stripes}
    */
   public ResolverUtil<T> find(Test test, String packageName) {
-    String path = getPackagePath(packageName);
+    String path = getPackagePath(packageName); // 根据包名获取其对应的路径
 
     try {
+      // 通过VFS.getInstance().list查找packageName包下的所有资源
       List<String> children = VFS.getInstance().list(path);
       for (String child : children) {
         if (child.endsWith(".class")) {
-          addIfMatching(test, child);
+          addIfMatching(test, child); // 检测该类是否符合test条件
         }
       }
     } catch (IOException ioe) {
@@ -251,21 +254,25 @@ public class ResolverUtil<T> {
   /**
    * Add the class designated by the fully qualified class name provided to the set of
    * resolved classes if and only if it is approved by the Test supplied.
-   *
+   * 检测该类是否符合test条件
    * @param test the test used to determine if the class matches
    * @param fqn the fully qualified name of a class
    */
   @SuppressWarnings("unchecked")
   protected void addIfMatching(Test test, String fqn) {
     try {
+      // fqn是类的完全限定名，即包括其所在包的包名
       String externalName = fqn.substring(0, fqn.indexOf('.')).replace('/', '.');
       ClassLoader loader = getClassLoader();
       if (log.isDebugEnabled()) {
         log.debug("Checking to see if class " + externalName + " matches criteria [" + test + "]");
       }
 
+      // 加载指定的类
       Class<?> type = loader.loadClass(externalName);
+      // 通过Test.matches()方法检测条件是否满足
       if (test.matches(type)) {
+        // 将符合条件的类记录到matches集合中
         matches.add((Class<T>) type);
       }
     } catch (Throwable t) {

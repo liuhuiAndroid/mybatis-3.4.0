@@ -17,6 +17,10 @@ package org.apache.ibatis.logging;
 
 /**
  * @author Clinton Begin
+ * 统一的日志接口
+ * 定义了日志模块的功能
+ * 适配器模式——目标接口
+ * 提供了trace、debug、warn、error四个级别
  */
 public interface Log {
 

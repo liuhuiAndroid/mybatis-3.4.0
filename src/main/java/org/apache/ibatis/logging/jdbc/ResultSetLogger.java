@@ -15,6 +15,9 @@
  */
 package org.apache.ibatis.logging.jdbc;
 
+import org.apache.ibatis.logging.Log;
+import org.apache.ibatis.reflection.ExceptionUtil;
+
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -25,9 +28,6 @@ import java.sql.Types;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.ibatis.logging.Log;
-import org.apache.ibatis.reflection.ExceptionUtil;
-
 /**
  * ResultSet proxy to add logging
  * 
@@ -37,10 +37,15 @@ import org.apache.ibatis.reflection.ExceptionUtil;
  */
 public final class ResultSetLogger extends BaseJdbcLogger implements InvocationHandler {
 
+  // 记录了超大长度的类型
   private static Set<Integer> BLOB_TYPES = new HashSet<Integer>();
+  // 是否是ResultSet结果集的第一行
   private boolean first = true;
+  // 统计行数
   private int rows = 0;
+  // 真正的ResultSet对象
   private ResultSet rs;
+  // 记录了超大字段的列编号
   private Set<Integer> blobColumns = new HashSet<Integer>();
 
   static {
@@ -62,26 +67,31 @@ public final class ResultSetLogger extends BaseJdbcLogger implements InvocationH
   @Override
   public Object invoke(Object proxy, Method method, Object[] params) throws Throwable {
     try {
+      //  如果调用的是从Object继承的方法，则直接调用，不做任何其他处理
       if (Object.class.equals(method.getDeclaringClass())) {
         return method.invoke(this, params);
       }    
       Object o = method.invoke(rs, params);
-      if ("next".equals(method.getName())) {
-        if (((Boolean) o)) {
+      if ("next".equals(method.getName())) { // 针对ResultSet.next()方法的处理
+        if (((Boolean) o)) { // 是否还存在下一行数据
           rows++;
           if (isTraceEnabled()) {
             ResultSetMetaData rsmd = rs.getMetaData();
-            final int columnCount = rsmd.getColumnCount();
-            if (first) {
+            final int columnCount = rsmd.getColumnCount(); // 获取数据集的列数
+            if (first) { // 如果是第一行数据，则输出表头
               first = false;
+              // 除了输出表头，还会填充blobColumns集合，记录超大类型的列
               printColumnHeaders(rsmd, columnCount);
             }
+            // 输出该行记录，注意会过滤掉blobColumns中记录的列，这些列的数据较大，不会输出到日志
             printColumnValues(columnCount);
           }
         } else {
+          // 遍历完ResultSet之后，会输出总行数
           debug("     Total: " + rows, false);
         }
       }
+      // 清空BaseJdbcLogger中的column*集合
       clearColumnInfo();
       return o;
     } catch (Throwable t) {

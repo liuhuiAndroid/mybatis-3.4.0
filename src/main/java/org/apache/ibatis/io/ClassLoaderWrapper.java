@@ -20,7 +20,7 @@ import java.net.URL;
 
 /**
  * A class to wrap access to multiple class loaders making them work as one
- *
+ * ClassLoader包装器，其中包含了多个ClassLoader对象
  * @author Clinton Begin
  */
 public class ClassLoaderWrapper {
@@ -35,10 +35,10 @@ public class ClassLoaderWrapper {
       // 初始化systemClassLoader字段
       systemClassLoader = ClassLoader.getSystemClassLoader();
     } catch (SecurityException ignored) {
-      // AccessControlException on Google App Engine   
+      // AccessControlException on Google App Engine
     }
   }
-  
+
   /*
    * Get a resource as a URL using the current class path
    *

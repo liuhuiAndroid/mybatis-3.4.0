@@ -3,6 +3,8 @@ package com.lh.demo.test;
 import com.lh.demo.pojo.User;
 
 import org.apache.ibatis.io.Resources;
+import org.apache.ibatis.logging.Log;
+import org.apache.ibatis.logging.log4j.Log4jImpl;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.session.SqlSessionFactoryBuilder;
@@ -29,4 +31,9 @@ public class Test1 {
         System.out.println(user);
     }
 
+    @Test
+    public void testLog() throws Exception {
+       Log log = new Log4jImpl(Test1.this.getClass().getSimpleName());
+        log.error("testLog");
+    }
 }

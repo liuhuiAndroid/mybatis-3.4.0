@@ -15,52 +15,76 @@
  */
 package org.apache.ibatis.logging.jdk14;
 
+import org.apache.ibatis.logging.Log;
+
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.apache.ibatis.logging.Log;
-
 /**
  * @author Clinton Begin
+ * 适配器模式——适配器类，实现了org.apache.ibatis.logging.Log接口，并封装了java.util.logging.Logger对象
  */
 public class Jdk14LoggingImpl implements Log {
 
+  // 底层封装的java.util.logging.Logger对象
   private Logger log;
 
   public Jdk14LoggingImpl(String clazz) {
+    // 初始化java.util.logging.Logger对象
     log = Logger.getLogger(clazz);
   }
 
+  /**
+   * 将请求委托给了java.util.logging.Logger对象的相应方法
+   */
   @Override
   public boolean isDebugEnabled() {
     return log.isLoggable(Level.FINE);
   }
 
+  /**
+   * 将请求委托给了java.util.logging.Logger对象的相应方法
+   */
   @Override
   public boolean isTraceEnabled() {
     return log.isLoggable(Level.FINER);
   }
 
+  /**
+   * 将请求委托给了java.util.logging.Logger对象的相应方法
+   */
   @Override
   public void error(String s, Throwable e) {
     log.log(Level.SEVERE, s, e);
   }
 
+  /**
+   * 将请求委托给了java.util.logging.Logger对象的相应方法
+   */
   @Override
   public void error(String s) {
     log.log(Level.SEVERE, s);
   }
 
+  /**
+   * 将请求委托给了java.util.logging.Logger对象的相应方法
+   */
   @Override
   public void debug(String s) {
     log.log(Level.FINE, s);
   }
 
+  /**
+   * 将请求委托给了java.util.logging.Logger对象的相应方法
+   */
   @Override
   public void trace(String s) {
     log.log(Level.FINER, s);
   }
 
+  /**
+   * 将请求委托给了java.util.logging.Logger对象的相应方法
+   */
   @Override
   public void warn(String s) {
     log.log(Level.WARNING, s);

@@ -15,6 +15,8 @@
  */
 package org.apache.ibatis.logging.jdbc;
 
+import org.apache.ibatis.logging.Log;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -24,25 +26,31 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 
-import org.apache.ibatis.logging.Log;
-
 /**
  * Base class for proxies to do logging
- * 
+ * 通过JDK动态代理的方式，将JDBC操作通过指定的日志框架打印出来
+ *
  * @author Clinton Begin
  * @author Eduardo Macarron
  */
 public abstract class BaseJdbcLogger {
 
+  // 记录了PreparedStatement接口中定义的常用的set*()方法
   protected static final Set<String> SET_METHODS = new HashSet<String>();
+  // 记录了Statement接口和PreparedStatement接口中与执行SQL语句相关的方法
   protected static final Set<String> EXECUTE_METHODS = new HashSet<String>();
 
+  // 记录了PreparedStatement.set*()方法设置的键值对
   private Map<Object, Object> columnMap = new HashMap<Object, Object>();
 
+  // 记录了PreparedStatement.set*()方法设置的key值
   private List<Object> columnNames = new ArrayList<Object>();
+  // 记录了PreparedStatement.set*()方法设置的value值
   private List<Object> columnValues = new ArrayList<Object>();
 
+  // 用于输出日志的Log对象
   protected Log statementLog;
+  // 记录了SQL的层数，用于格式化输出SQL
   protected int queryStack;
 
   /*
