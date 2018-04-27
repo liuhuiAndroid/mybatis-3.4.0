@@ -38,10 +38,14 @@ import java.util.*;
  * @author Clinton Begin
  * @author Eduardo Macarron
  * @author Lasse Voss
+ * 封装了Mapper接口中对应方法的信息，以及对应SQL语句的信息
+ * 可以将MapperMethod看作连接Mapper接口以及映射配置文件中定义的SQL语句的桥梁
  */
 public class MapperMethod {
 
+  // 记录了SQL语句的名称和类型
   private final SqlCommand command;
+  // Mapper接口中对应方法的相关信息
   private final MethodSignature method;
 
   public MapperMethod(Class<?> mapperInterface, Method method, Configuration config) {
@@ -192,21 +196,33 @@ public class MapperMethod {
 
   public static class SqlCommand {
 
+    // 记录了SQL语句的名称
     private final String name;
+    // 记录了SQL语句的类型
     private final SqlCommandType type;
 
+    /**
+     * 构造方法会初始化name字段和type字段
+     */
     public SqlCommand(Configuration configuration, Class<?> mapperInterface, Method method) {
+      // SQL语句的名称是由Mapper接口的名称与对应的方法名称组成
       String statementName = mapperInterface.getName() + "." + method.getName();
       MappedStatement ms = null;
+      // 检测是否有该名称的SQL语句
       if (configuration.hasStatement(statementName)) {
+        // 从configuration.mappedStatements集合中查找对应的MappedStatement对象
+        // MappedStatement对象中封装了SQL语句相关的信息，在MyBatis初始化时创建
         ms = configuration.getMappedStatement(statementName);
       } else if (!mapperInterface.equals(method.getDeclaringClass())) { // issue #35
+        // 如果指定方法是在父接口中定义的，则在此进行继承结构的处理
         String parentStatementName = method.getDeclaringClass().getName() + "." + method.getName();
+        // 从configuration.mappedStatements集合中查找对应的MappedStatement对象
         if (configuration.hasStatement(parentStatementName)) {
           ms = configuration.getMappedStatement(parentStatementName);
         }
       }
       if (ms == null) {
+        // 处理@Flush注解
         if(method.getAnnotation(Flush.class) != null){
           name = null;
           type = SqlCommandType.FLUSH;
@@ -214,6 +230,7 @@ public class MapperMethod {
           throw new BindingException("Invalid bound statement (not found): " + statementName);
         }
       } else {
+        // 初始化name和type
         name = ms.getId();
         type = ms.getSqlCommandType();
         if (type == SqlCommandType.UNKNOWN) {
