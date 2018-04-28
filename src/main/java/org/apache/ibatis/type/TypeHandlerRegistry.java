@@ -15,6 +15,9 @@
  */
 package org.apache.ibatis.type;
 
+import org.apache.ibatis.io.ResolverUtil;
+import org.apache.ibatis.io.Resources;
+
 import java.io.InputStream;
 import java.io.Reader;
 import java.lang.reflect.Constructor;
@@ -30,19 +33,25 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.ibatis.io.ResolverUtil;
-import org.apache.ibatis.io.Resources;
-
 /**
  * @author Clinton Begin
+ * 负责管理TypeHandler对象
  */
 public final class TypeHandlerRegistry {
 
+  // 记录了JdbcType与TypeHandler之间的对应关系，其中JdbcType是一个枚举类型，它定义对应的JDBC类型
+  // 该集合主要用于从结果集读取数据时，将数据从Jdbc类型转换成Java类型
   private final Map<JdbcType, TypeHandler<?>> JDBC_TYPE_HANDLER_MAP = new EnumMap<JdbcType, TypeHandler<?>>(JdbcType.class);
+  // 记录了Java类型向指定JdbcType转换时，需要使用的TypeHandler对象
   private final Map<Type, Map<JdbcType, TypeHandler<?>>> TYPE_HANDLER_MAP = new HashMap<Type, Map<JdbcType, TypeHandler<?>>>();
+  // 记录了全部TypeHandler的类型以及该类型相应的TypeHandler对象
   private final TypeHandler<Object> UNKNOWN_TYPE_HANDLER = new UnknownTypeHandler(this);
+  // 空TypeHandler集合的标识
   private final Map<Class<?>, TypeHandler<?>> ALL_TYPE_HANDLERS_MAP = new HashMap<Class<?>, TypeHandler<?>>();
 
+  /**
+   * 通过register()方法为很多基础类型注册对应的TypeHandler对象
+   */
   public TypeHandlerRegistry() {
     register(Boolean.class, new BooleanTypeHandler());
     register(boolean.class, new BooleanTypeHandler());
@@ -73,11 +82,15 @@ public final class TypeHandlerRegistry {
     register(JdbcType.DOUBLE, new DoubleTypeHandler());
 
     register(Reader.class, new ClobReaderTypeHandler());
+    // StringTypeHandler能够将数据从String类型转换成null，
+    // 所以向TYPE_HANDLER_MAP集合注册该对象，并向ALL_TYPE_HANDLERS_MAP集合注册StringTypeHandler
     register(String.class, new StringTypeHandler());
     register(String.class, JdbcType.CHAR, new StringTypeHandler());
     register(String.class, JdbcType.CLOB, new ClobTypeHandler());
     register(String.class, JdbcType.VARCHAR, new StringTypeHandler());
     register(String.class, JdbcType.LONGVARCHAR, new ClobTypeHandler());
+    // NStringTypeHandler能够将数据从String类型转换成NVARCHAR，
+    // 所以向TYPE_HANDLER_MAP集合注册该对象，并向ALL_TYPE_HANDLERS_MAP集合注册NStringTypeHandler
     register(String.class, JdbcType.NVARCHAR, new NStringTypeHandler());
     register(String.class, JdbcType.NCHAR, new NStringTypeHandler());
     register(String.class, JdbcType.NCLOB, new NClobTypeHandler());
@@ -85,6 +98,7 @@ public final class TypeHandlerRegistry {
     register(JdbcType.VARCHAR, new StringTypeHandler());
     register(JdbcType.CLOB, new ClobTypeHandler());
     register(JdbcType.LONGVARCHAR, new ClobTypeHandler());
+    // 向JDBC_TYPE_HANDLER_MAP集合注册NVARCHAR对应的NStringTypeHandler
     register(JdbcType.NVARCHAR, new NStringTypeHandler());
     register(JdbcType.NCHAR, new NStringTypeHandler());
     register(JdbcType.NCLOB, new NClobTypeHandler());
@@ -171,6 +185,9 @@ public final class TypeHandlerRegistry {
     return getTypeHandler(javaTypeReference, null);
   }
 
+  /**
+   * 根据指定的JdbcType类型，从JDBC_TYPE_HANDLER_MAP集合中查找TypeHandler对象
+   */
   public TypeHandler<?> getTypeHandler(JdbcType jdbcType) {
     return JDBC_TYPE_HANDLER_MAP.get(jdbcType);
   }
@@ -185,15 +202,18 @@ public final class TypeHandlerRegistry {
 
   @SuppressWarnings("unchecked")
   private <T> TypeHandler<T> getTypeHandler(Type type, JdbcType jdbcType) {
+    // 查找(或初始化)Java类型对应的TypeHandler集合
     Map<JdbcType, TypeHandler<?>> jdbcHandlerMap = TYPE_HANDLER_MAP.get(type);
     TypeHandler<?> handler = null;
     if (jdbcHandlerMap != null) {
+      // 根据JdbcType类型查找TypeHandler对象
       handler = jdbcHandlerMap.get(jdbcType);
       if (handler == null) {
         handler = jdbcHandlerMap.get(null);
       }
       if (handler == null) {
         // #591
+        // 如果jdbcHandlerMap只注册一个TypeHandler，则使用此TypeHandler对象
         handler = pickSoleHandler(jdbcHandlerMap);
       }
     }
@@ -222,6 +242,7 @@ public final class TypeHandlerRegistry {
   }
 
   public void register(JdbcType jdbcType, TypeHandler<?> handler) {
+    // 注册JDBC类型对应的TypeHandler
     JDBC_TYPE_HANDLER_MAP.put(jdbcType, handler);
   }
 
@@ -234,17 +255,23 @@ public final class TypeHandlerRegistry {
   @SuppressWarnings("unchecked")
   public <T> void register(TypeHandler<T> typeHandler) {
     boolean mappedTypeFound = false;
+    // 获取@MappedTypes注解
     MappedTypes mappedTypes = typeHandler.getClass().getAnnotation(MappedTypes.class);
     if (mappedTypes != null) {
+      // 根据@MappedTypes注解中指定的Java类型进行注册
       for (Class<?> handledType : mappedTypes.value()) {
+        // 经过强制类型转换以及使用反射创建TypeHandler对象之后，交由register重载继续处理
         register(handledType, typeHandler);
         mappedTypeFound = true;
       }
     }
     // @since 3.1.0 - try to auto-discover the mapped type
+    // 从3.1.0版本开始，可以根据TypeHandler类型自动查找对应的Java类型，
+    // 这需要我们的TypeHandler实现类同时继承TypeReference这个抽象类
     if (!mappedTypeFound && typeHandler instanceof TypeReference) {
       try {
         TypeReference<T> typeReference = (TypeReference<T>) typeHandler;
+        // 交由register重载处理
         register(typeReference.getRawType(), typeHandler);
         mappedTypeFound = true;
       } catch (Throwable t) {
@@ -252,6 +279,7 @@ public final class TypeHandlerRegistry {
       }
     }
     if (!mappedTypeFound) {
+      // 未指定@MappedTypes注解，交由register重载继续处理
       register((Class<T>) null, typeHandler);
     }
   }
@@ -263,15 +291,20 @@ public final class TypeHandlerRegistry {
   }
 
   private <T> void register(Type javaType, TypeHandler<? extends T> typeHandler) {
+    // 获取@MappedJdbcTypes注解
     MappedJdbcTypes mappedJdbcTypes = typeHandler.getClass().getAnnotation(MappedJdbcTypes.class);
     if (mappedJdbcTypes != null) {
+      // 根据@MappedJdbcTypes注解指定的JDBC类型进行注册
       for (JdbcType handledJdbcType : mappedJdbcTypes.value()) {
+        // 交由register重载完成注册
         register(javaType, handledJdbcType, typeHandler);
       }
       if (mappedJdbcTypes.includeNullJdbcType()) {
+        // 交由register重载完成注册
         register(javaType, null, typeHandler);
       }
     } else {
+      // 交由register重载完成注册
       register(javaType, null, typeHandler);
     }
   }
@@ -286,15 +319,25 @@ public final class TypeHandlerRegistry {
     register((Type) type, jdbcType, handler);
   }
 
+  /**
+   *
+   * @param javaType TypeHandler能够处理的Java类型
+   * @param jdbcType Jdbc类型
+   * @param handler TypeHandler对象
+   */
   private void register(Type javaType, JdbcType jdbcType, TypeHandler<?> handler) {
+    // 检测是否明确指定了TypeHandler能够处理的Java类型
     if (javaType != null) {
+      // 获取指定Java类型在TYPE_HANDLER_MAP集合中对应的TypeHandler集合
       Map<JdbcType, TypeHandler<?>> map = TYPE_HANDLER_MAP.get(javaType);
       if (map == null) {
+        // 创建新的TypeHandler集合，并添加到TYPE_HANDLER_MAP中
         map = new HashMap<JdbcType, TypeHandler<?>>();
         TYPE_HANDLER_MAP.put(javaType, map);
       }
       map.put(jdbcType, handler);
     }
+    // 向ALL_TYPE_HANDLERS_MAP集合注册TypeHandler类型和对应的TypeHandler对象
     ALL_TYPE_HANDLERS_MAP.put(handler.getClass(), handler);
   }
 
@@ -306,14 +349,18 @@ public final class TypeHandlerRegistry {
 
   public void register(Class<?> typeHandlerClass) {
     boolean mappedTypeFound = false;
+    // 获取@MappedTypes注解
     MappedTypes mappedTypes = typeHandlerClass.getAnnotation(MappedTypes.class);
     if (mappedTypes != null) {
+      // 根据@MappedTypes注解中指定的Java类型进行注册
       for (Class<?> javaTypeClass : mappedTypes.value()) {
+        // 经过强制类型转换以及使用反射创建TypeHandler对象之后，交由register重载继续处理
         register(javaTypeClass, typeHandlerClass);
         mappedTypeFound = true;
       }
     }
     if (!mappedTypeFound) {
+      // 未指定@MappedTypes注解，交由register重载继续处理
       register(getInstance(null, typeHandlerClass));
     }
   }
@@ -357,14 +404,17 @@ public final class TypeHandlerRegistry {
   }
 
   // scan
-
+  // 主要用来自动扫描指定包下的TypeHandler实现类并完成注册
   public void register(String packageName) {
     ResolverUtil<Class<?>> resolverUtil = new ResolverUtil<Class<?>>();
+    // 查找指定包下的TypeHandler接口实现类
     resolverUtil.find(new ResolverUtil.IsA(TypeHandler.class), packageName);
     Set<Class<? extends Class<?>>> handlerSet = resolverUtil.getClasses();
     for (Class<?> type : handlerSet) {
       //Ignore inner classes and interfaces (including package-info.java) and abstract classes
+      // 过滤掉内部类、接口以及抽象类
       if (!type.isAnonymousClass() && !type.isInterface() && !Modifier.isAbstract(type.getModifiers())) {
+        // 交由register重载继续后续注册操作
         register(type);
       }
     }

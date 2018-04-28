@@ -15,13 +15,13 @@
  */
 package org.apache.ibatis.type;
 
+import org.apache.ibatis.executor.result.ResultMapException;
+import org.apache.ibatis.session.Configuration;
+
 import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
-import org.apache.ibatis.executor.result.ResultMapException;
-import org.apache.ibatis.session.Configuration;
 
 /**
  * @author Clinton Begin
@@ -42,6 +42,7 @@ public abstract class BaseTypeHandler<T> extends TypeReference<T> implements Typ
         throw new TypeException("JDBC requires that the JdbcType must be specified for all nullable parameters.");
       }
       try {
+        // 绑定非空参数，该方法抽象方法，由子类实现
         ps.setNull(i, jdbcType.TYPE_CODE);
       } catch (SQLException e) {
         throw new TypeException("Error setting null for parameter #" + i + " with JdbcType " + jdbcType + " . " +
@@ -63,10 +64,12 @@ public abstract class BaseTypeHandler<T> extends TypeReference<T> implements Typ
   public T getResult(ResultSet rs, String columnName) throws SQLException {
     T result;
     try {
+      // 抽象方法，有多个重载，由子类实现
       result = getNullableResult(rs, columnName);
     } catch (Exception e) {
       throw new ResultMapException("Error attempting to get column '" + columnName + "' from result set.  Cause: " + e, e);
     }
+    // 对空值的特殊处理
     if (rs.wasNull()) {
       return null;
     } else {
@@ -78,10 +81,12 @@ public abstract class BaseTypeHandler<T> extends TypeReference<T> implements Typ
   public T getResult(ResultSet rs, int columnIndex) throws SQLException {
     T result;
     try {
+      // 抽象方法，有多个重载，由子类实现
       result = getNullableResult(rs, columnIndex);
     } catch (Exception e) {
       throw new ResultMapException("Error attempting to get column #" + columnIndex+ " from result set.  Cause: " + e, e);
     }
+    // 对空值的特殊处理
     if (rs.wasNull()) {
       return null;
     } else {
@@ -93,10 +98,12 @@ public abstract class BaseTypeHandler<T> extends TypeReference<T> implements Typ
   public T getResult(CallableStatement cs, int columnIndex) throws SQLException {
     T result;
     try {
+      // 抽象方法，有多个重载，由子类实现
       result = getNullableResult(cs, columnIndex);
     } catch (Exception e) {
       throw new ResultMapException("Error attempting to get column #" + columnIndex+ " from callable statement.  Cause: " + e, e);
     }
+    // 对空值的特殊处理
     if (cs.wasNull()) {
       return null;
     } else {
