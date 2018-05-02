@@ -15,20 +15,23 @@
  */
 package org.apache.ibatis.cache.impl;
 
+import org.apache.ibatis.cache.Cache;
+import org.apache.ibatis.cache.CacheException;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 
-import org.apache.ibatis.cache.Cache;
-import org.apache.ibatis.cache.CacheException;
-
 /**
  * @author Clinton Begin
+ * 装饰模式中的ConcreteComponent角色
  */
 public class PerpetualCache implements Cache {
 
+  // Cache对象的唯一标识
   private String id;
 
+  // 用于记录缓存项的Map对象
   private Map<Object, Object> cache = new HashMap<Object, Object>();
 
   public PerpetualCache(String id) {
@@ -40,26 +43,41 @@ public class PerpetualCache implements Cache {
     return id;
   }
 
+  /**
+   * 通过cache字段记录这个HashMap对象的相应方法实现
+   */
   @Override
   public int getSize() {
     return cache.size();
   }
 
+  /**
+   * 通过cache字段记录这个HashMap对象的相应方法实现
+   */
   @Override
   public void putObject(Object key, Object value) {
     cache.put(key, value);
   }
 
+  /**
+   * 通过cache字段记录这个HashMap对象的相应方法实现
+   */
   @Override
   public Object getObject(Object key) {
     return cache.get(key);
   }
 
+  /**
+   * 通过cache字段记录这个HashMap对象的相应方法实现
+   */
   @Override
   public Object removeObject(Object key) {
     return cache.remove(key);
   }
 
+  /**
+   * 通过cache字段记录这个HashMap对象的相应方法实现
+   */
   @Override
   public void clear() {
     cache.clear();
@@ -70,6 +88,9 @@ public class PerpetualCache implements Cache {
     return null;
   }
 
+  /**
+   * 只关心id字段，并不关心cache字段
+   */
   @Override
   public boolean equals(Object o) {
     if (getId() == null) {
@@ -86,6 +107,9 @@ public class PerpetualCache implements Cache {
     return getId().equals(otherCache.getId());
   }
 
+  /**
+   * 只关心id字段，并不关心cache字段
+   */
   @Override
   public int hashCode() {
     if (getId() == null) {
