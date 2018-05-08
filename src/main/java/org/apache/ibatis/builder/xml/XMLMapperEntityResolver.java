@@ -26,7 +26,8 @@ import java.util.Locale;
 
 /**
  * Offline entity resolver for the MyBatis DTDs
- * 
+ * 加载本地DTD文件
+ *
  * @author Clinton Begin
  * @author Eduardo Macarron
  */
@@ -49,7 +50,12 @@ public class XMLMapperEntityResolver implements EntityResolver {
    * @param systemId The system id that is what comes after the public id.
    * @return The InputSource for the DTD
    * 
-   * @throws org.xml.sax.SAXException If anything goes wrong
+   * @throws org.xml.sax.SAXExce“ption If anything goes wrong
+   *
+   * 核心方法
+   * publicId:-//mybatis.org//DTD Config 3.0//EN
+   * systemId:http://mybatis.org/dtd/mybatis-3-config.dtd
+   * lowerCaseSystemId:http://mybatis.org/dtd/mybatis-3-config.dtd
    */
   @Override
   public InputSource resolveEntity(String publicId, String systemId) throws SAXException {

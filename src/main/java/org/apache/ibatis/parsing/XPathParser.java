@@ -227,9 +227,11 @@ public class XPathParser {
     return new XNode(this, node, variables);
   }
 
+  /**
+   * 通过调用Xpath.evaluate()方法查找指定路径的节点或属性
+   */
   private Object evaluate(String expression, Object root, QName returnType) {
     try {
-      // 通过调用Xpath.evaluate()方法查找指定路径的节点或属性
       return xpath.evaluate(expression, root, returnType);
     } catch (Exception e) {
       throw new BuilderException("Error evaluating XPath.  Cause: " + e, e);
@@ -237,7 +239,8 @@ public class XPathParser {
   }
 
   /**
-   * 封装了创建Document对象过程并触发了加载XML文档的过程
+   * 封装了创建Document对象的过程并触发了加载XML文档的过程
+   * 类似XPathTest.java
    */
   private Document createDocument(InputSource inputSource) {
     // important: this must only be called AFTER common constructor
