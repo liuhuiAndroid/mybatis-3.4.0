@@ -79,7 +79,7 @@ public class BlockingCache implements Cache {
     // 缓存有key对应的缓存项，释放锁，否则继续持有锁
     if (value != null) {
       releaseLock(key);
-    }        
+    }
     return value;
   }
 

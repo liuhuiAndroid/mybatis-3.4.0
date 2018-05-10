@@ -19,6 +19,7 @@ import java.util.Properties;
 
 /**
  * @author Clinton Begin
+ * 指定了是否开启使用默认值的功能以及默认的分隔符
  */
 public class PropertyParser {
 
@@ -31,7 +32,7 @@ public class PropertyParser {
    */
   public static String parse(String string, Properties variables) {
     VariableTokenHandler handler = new VariableTokenHandler(variables);
-    // 创建GenericTokenParser对象，并指定其处理的占位符格式为"${}"
+    // 创建GenericTokenParser解析器，并指定其处理的占位符格式为"${}"
     GenericTokenParser parser = new GenericTokenParser("${", "}", handler);
     // 将默认值的处理委托给GenericTokenParser.parse()方法
     return parser.parse(string);

@@ -19,6 +19,7 @@ import java.sql.ResultSet;
 
 /**
  * @author Clinton Begin
+ * 结果集类型
  */
 public enum ResultSetType {
   FORWARD_ONLY(ResultSet.TYPE_FORWARD_ONLY),

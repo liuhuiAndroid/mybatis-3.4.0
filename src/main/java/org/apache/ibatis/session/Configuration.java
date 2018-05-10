@@ -139,8 +139,11 @@ public class Configuration {
   protected Class<?> configurationFactory;
 
   protected final InterceptorChain interceptorChain = new InterceptorChain();
+
+  // 这是Configuration中定义的typeHandlerRegistry字段和typeAliasRegistry字段，全局唯一
   protected final TypeHandlerRegistry typeHandlerRegistry = new TypeHandlerRegistry();
   protected final TypeAliasRegistry typeAliasRegistry = new TypeAliasRegistry();
+
   protected final LanguageDriverRegistry languageRegistry = new LanguageDriverRegistry();
 
   protected final Map<String, MappedStatement> mappedStatements = new StrictMap<MappedStatement>("Mapped Statements collection");
