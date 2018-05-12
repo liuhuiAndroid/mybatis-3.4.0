@@ -32,16 +32,21 @@ public class TypeParameterResolver {
   /**
    * @return The field type as {@link Type}. If it has type parameters in the declaration,<br>
    *         they will be resolved to the actual runtime {@link Type}s.
+   *         解析字段类型
    */
   public static Type resolveFieldType(Field field, Type srcType) {
+    // 获取字段的声明类型
     Type fieldType = field.getGenericType();
+    // 获取字段定义所在的类的Class对象
     Class<?> declaringClass = field.getDeclaringClass();
+    // 调用resolveType()方法进行后续处理
     return resolveType(fieldType, srcType, declaringClass);
   }
 
   /**
    * @return The return type of the method as {@link Type}. If it has type parameters in the declaration,<br>
    *         they will be resolved to the actual runtime {@link Type}s.
+   *         解析方法返回值类型
    */
   public static Type resolveReturnType(Method method, Type srcType) {
     Type returnType = method.getGenericReturnType();
@@ -52,6 +57,7 @@ public class TypeParameterResolver {
   /**
    * @return The parameter types of the method as an array of {@link Type}s. If they have type parameters in the declaration,<br>
    *         they will be resolved to the actual runtime {@link Type}s.
+   *         解析方法参数列表中各个参数的类型
    */
   public static Type[] resolveParamTypes(Method method, Type srcType) {
     Type[] paramTypes = method.getGenericParameterTypes();
@@ -63,14 +69,25 @@ public class TypeParameterResolver {
     return result;
   }
 
+  /**
+   *
+   * @param type 根据type类型，即字段、方法返回值或方法参数的类型，选择合适的方法进行解析
+   * @param srcType 表示查找该字段、返回值或方法参数的起始位置
+   * @param declaringClass 表示该字段、方法定义所在的类
+   * @return
+   */
   private static Type resolveType(Type type, Type srcType, Class<?> declaringClass) {
     if (type instanceof TypeVariable) {
+      // 解析TypeVariable类型
       return resolveTypeVar((TypeVariable<?>) type, srcType, declaringClass);
     } else if (type instanceof ParameterizedType) {
+      // 解析ParameterizedType类型
       return resolveParameterizedType((ParameterizedType) type, srcType, declaringClass);
     } else if (type instanceof GenericArrayType) {
+      // 解析GenericArrayType类型
       return resolveGenericArrayType((GenericArrayType) type, srcType, declaringClass);
     } else {
+      // Class类型
       return type;
     }
   }

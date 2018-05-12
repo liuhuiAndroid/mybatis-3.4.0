@@ -73,6 +73,7 @@ public class Reflector {
     // 初始化type字段
     type = clazz;
 
+    // 查找clazz的默认构造方法(无参构造方法)，具体实现是通过反射遍历所有构造方法
     addDefaultConstructor(clazz);
     // 处理clazz中的getter方法，填充getMethods集合和getTypes集合
     addGetMethods(clazz);
@@ -80,9 +81,11 @@ public class Reflector {
     addSetMethods(clazz);
     // 处理没有getter/setter方法的字段
     addFields(clazz);
+
     // 根据getMethods/setMethods集合，初始化可读/写属性的名称集合
     readablePropertyNames = getMethods.keySet().toArray(new String[getMethods.keySet().size()]);
     writeablePropertyNames = setMethods.keySet().toArray(new String[setMethods.keySet().size()]);
+
     // 初始化caseInsensitivePropertyMap集合，其中记录了所有大写格式的属性名称
     for (String propName : readablePropertyNames) {
       caseInsensitivePropertyMap.put(propName.toUpperCase(Locale.ENGLISH), propName);
@@ -163,15 +166,19 @@ public class Reflector {
           // 获取方法的返回值
           Class<?> methodType = method.getReturnType();
           if (methodType.equals(getterType)) {
+            // 返回值相同，这种情况应该在步骤1中被过滤掉，如果出现，则抛出异常
             throw new ReflectionException("Illegal overloaded getter method with ambiguous type for property "
                 + propName + " in class " + firstMethod.getDeclaringClass()
                 + ".  This breaks the JavaBeans " + "specification and can cause unpredicatble results.");
           } else if (methodType.isAssignableFrom(getterType)) {
             // OK getter type is descendant
+            // 当前最适合的方法的返回值是当前方法返回的子类，什么都不做，当前最适合的方法依然不变
           } else if (getterType.isAssignableFrom(methodType)) {
+            // 当前方法的返回值是当前最适合的方法的返回值的子类，更新临时变量getter，当前的getter方法成为最适合的getter方法
             getter = method;
             getterType = methodType;
           } else {
+            // 返回值相同，二义性，抛出异常
             throw new ReflectionException("Illegal overloaded getter method with ambiguous type for property "
                 + propName + " in class " + firstMethod.getDeclaringClass()
                 + ".  This breaks the JavaBeans " + "specification and can cause unpredicatble results.");
@@ -286,8 +293,12 @@ public class Reflector {
     return result;
   }
 
+  /**
+   * 处理类中定义的所有字段，并且将处理后的字段信息添加到setMethods集合、setTypes集合，getMethods集合以及getTypes集合中
+   * @param clazz
+   */
   private void addFields(Class<?> clazz) {
-    Field[] fields = clazz.getDeclaredFields();
+    Field[] fields = clazz.getDeclaredFields();// 获取clazz中定义的全部字段
     for (Field field : fields) {
       if (canAccessPrivateMethods()) {
         try {
@@ -297,21 +308,27 @@ public class Reflector {
         }
       }
       if (field.isAccessible()) {
+        // 当setMethods集合不包换同名属性时，将其记录到setMethods集合和setTypes集合
         if (!setMethods.containsKey(field.getName())) {
           // issue #379 - removed the check for final because JDK 1.5 allows
           // modification of final fields through reflection (JSR-133). (JGB)
           // pr #16 - final static can only be set by the classloader
           int modifiers = field.getModifiers();
+          // 过滤掉final和static修饰的字段
           if (!(Modifier.isFinal(modifiers) && Modifier.isStatic(modifiers))) {
+            // 同addGetMethod()
             addSetField(field);
           }
         }
+        // 当getMethods集合中不包含同名属性时，将其记录到getMethods集合和getTypes集合
         if (!getMethods.containsKey(field.getName())) {
+          // 同addSetField()
           addGetField(field);
         }
       }
     }
     if (clazz.getSuperclass() != null) {
+      // 处理父类中定义的字段
       addFields(clazz.getSuperclass());
     }
   }
@@ -344,6 +361,8 @@ public class Reflector {
    *
    * @param cls The class
    * @return An array containing all methods in this class
+   *
+   * 获取当前类以及其父类中定义的所有方法的唯一签名，以及相应的Method对象
    */
   private Method[] getClassMethods(Class<?> cls) {
     // 用于记录指定类中定义的全部方法的唯一签名以及对应的Method对象
@@ -394,6 +413,7 @@ public class Reflector {
             }
           }
 
+          // 记录该签名和方法的对应关系
           uniqueMethods.put(signature, currentMethod);
         }
       }
