@@ -24,11 +24,17 @@ import java.util.List;
  */
 public class InterceptorChain {
 
+  /**
+   * 记录了mybatis-config.xml文件中配置的拦截器
+   */
   private final List<Interceptor> interceptors = new ArrayList<Interceptor>();
 
+  /**
+   * 遍历interceptors集合，并调用其中每个元素的plugin()方法创建代理对象
+   */
   public Object pluginAll(Object target) {
-    for (Interceptor interceptor : interceptors) {
-      target = interceptor.plugin(target);
+    for (Interceptor interceptor : interceptors) {// 遍历interceptors集合
+      target = interceptor.plugin(target);// 调用Interceptor.plugin()方法
     }
     return target;
   }

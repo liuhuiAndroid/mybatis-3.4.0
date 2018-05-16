@@ -15,11 +15,6 @@
  */
 package org.apache.ibatis.builder.xml;
 
-import java.io.InputStream;
-import java.io.Reader;
-import java.util.Properties;
-import javax.sql.DataSource;
-
 import org.apache.ibatis.builder.BaseBuilder;
 import org.apache.ibatis.builder.BuilderException;
 import org.apache.ibatis.datasource.DataSourceFactory;
@@ -43,6 +38,12 @@ import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.LocalCacheScope;
 import org.apache.ibatis.transaction.TransactionFactory;
 import org.apache.ibatis.type.JdbcType;
+
+import java.io.InputStream;
+import java.io.Reader;
+import java.util.Properties;
+
+import javax.sql.DataSource;
 
 /**
  * @author Clinton Begin
@@ -169,13 +170,21 @@ public class XMLConfigBuilder extends BaseBuilder {
     }
   }
 
+  /**
+   * 解析mybatis-config.xml配置文件中定义的<plugin>节点
+   * @param parent
+   * @throws Exception
+   */
   private void pluginElement(XNode parent) throws Exception {
     if (parent != null) {
       for (XNode child : parent.getChildren()) {
         String interceptor = child.getStringAttribute("interceptor");
         Properties properties = child.getChildrenAsProperties();
+        //得到相应的Interceptor对象以及配置的相应属性
         Interceptor interceptorInstance = (Interceptor) resolveClass(interceptor).newInstance();
+        //完成对Interceptor对象的初始化配置
         interceptorInstance.setProperties(properties);
+        //将Interceptor对象添加到Configuration的configuration字段中保存
         configuration.addInterceptor(interceptorInstance);
       }
     }
